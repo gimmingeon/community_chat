@@ -8,5 +8,5 @@ app.get('/', (req, res) => {
 });
 
 app.listen(port, () => {
-    console.log(`${port}번으로 서버가 열렸습니다. `);
+    console.log(`${port}번으로 서버가 열렸습니다.`);
 });
