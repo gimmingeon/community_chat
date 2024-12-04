@@ -1,10 +1,18 @@
 import express from 'express';
 import bodyParser from 'body-parser';
+import userRouter from './src/routers/user.router.js';
+import postRouter from './src/routers/post.router.js';
+import commentRouter from './src/routers/comment.router.js';
 
 const app = express();
 const port = 3000;
 
 app.use(bodyParser.json());
+app.use(express.json());
+
+app.use('/user', userRouter);
+app.use('/post', postRouter);
+app.use('/comment', commentRouter);
 
 app.get('/', (req, res) => {
     res.send("hellow da");
