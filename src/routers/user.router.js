@@ -2,7 +2,7 @@ import express from 'express';
 import { prisma } from '../utils/index.js'
 import jwtwebToken from "jsonwebtoken";
 import bcrypt from 'bcrypt';
-import jwtValidateMiddleware from '../middleware/jwt-validate-middleware.js';
+import jwtMiddleware from '../middleware/jwt-validate-middleware.js';
 
 const router = express.Router();
 
@@ -89,7 +89,7 @@ router.post('/login', async (req, res) => {
 });
 
 // 내 정보 조회
-router.get('/myInfo', jwtValidateMiddleware, async (req, res) => {
+router.get('/myInfo', jwtMiddleware, async (req, res) => {
     const { userId, email, nickname } = req.user;
 
     return res.status(200).json({ userId, email, nickname });
