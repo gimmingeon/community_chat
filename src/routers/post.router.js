@@ -23,8 +23,8 @@ router.get('/', async (req, res) => {
                 select: { nickname: true }
             },
             title: true,
-            content: true,
             like: true,
+            createdAt: true
         },
         orderBy: [
             { [orderKey]: orderValue.toLowerCase() }
@@ -34,11 +34,42 @@ router.get('/', async (req, res) => {
     return res.json({ data: posts });
 });
 
-
-// 게시글 전체 조회
-
-
 // 게시글 상세 조회
+router.get('/:postId', async (req, res) => {
+
+    // postId params로 가져옴
+    const postId = req.params.postId;
+
+    if (!postId) {
+        return res.status(400).json({
+            success: false,
+            message: 'postId는 필수입니다.'
+        });
+    }
+
+    // postid, user의 닉네임, 제목, 내용, 좋아요 가져온다.
+    const post = await prisma.post.findFirst({
+
+        // params로 가져온 postId는 문자다. 때문에 숫자로 바꿈
+        where: { postId: Number(postId) },
+        select: {
+            postId: true,
+            user: {
+                select: { nickname: true }
+            },
+            title: true,
+            content: true,
+            like: true,
+            createdAt: true
+        },
+    });
+
+    if (!post) {
+        return res.json({ data: {} });
+    }
+
+    return res.json({ data: posts });
+});
 
 
 // 게시글 수정
