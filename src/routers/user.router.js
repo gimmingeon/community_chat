@@ -2,6 +2,7 @@ import express from 'express';
 import { prisma } from '../utils/index.js'
 import jwtwebToken from "jsonwebtoken";
 import bcrypt from 'bcrypt';
+import jwtValidateMiddleware from '../middleware/jwt-validate-middleware.js';
 
 const router = express.Router();
 
@@ -82,10 +83,14 @@ router.post('/login', async (req, res) => {
 
     const accessToken = jwtwebToken.sign({ userId: exitUser.userId }, 'custom-secret-key', { expiresIn: '12h' });
 
-    // res.cookie('authorizaion', `Bearer ${accessToken}`);
+    res.cookie('authorizaion', `Bearer ${accessToken}`);
 
     return res.json({ accessToken });
+});
 
-})
+// 내 정보 조회
+router.get('/userInfo', jwtValidateMiddleware, (req, res) => {
+
+});
 
 export default router;
