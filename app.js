@@ -10,6 +10,7 @@ const port = 3000;
 
 app.use(bodyParser.json());
 app.use(express.json());
+app.use(cookieParser());
 
 app.use('/user', userRouter);
 app.use('/post', postRouter);

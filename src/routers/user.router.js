@@ -83,14 +83,16 @@ router.post('/login', async (req, res) => {
 
     const accessToken = jwtwebToken.sign({ userId: exitUser.userId }, 'custom-secret-key', { expiresIn: '12h' });
 
-    res.cookie('authorizaion', `Bearer ${accessToken}`);
+    res.cookie('authorization', `Bearer ${accessToken}`);
 
     return res.json({ accessToken });
 });
 
 // 내 정보 조회
-router.get('/userInfo', jwtValidateMiddleware, (req, res) => {
+router.get('/myInfo', jwtValidateMiddleware, async (req, res) => {
+    const { userId, email, nickname } = req.user;
 
+    return res.status(200).json({ userId, email, nickname });
 });
 
 export default router;
