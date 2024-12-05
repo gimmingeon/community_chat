@@ -4,6 +4,28 @@ import jwtMiddleware from '../middleware/jwt-validate-middleware.js';
 
 const router = express.Router();
 
+// 게시글 생성
+router.post('/', jwtMiddleware, async (req, res) => {
+    const { userId } = req.user;
+    const { title, content } = req.body;
+
+    if (!title) {
+        return res.status(400).json({ success: false, message: "제목을 입력해주세요." });
+    }
+
+    if (!content) {
+        return res.status(400).json({ success: false, message: "내용을 입력해주세요." });
+    }
+
+    const post = await prisma.post.create({
+        data: { title, content, userId: userId }
+    });
+
+    return res.status(201).json({ post });
+
+});
+
+
 // 게시글 전체조회
 router.get('/', async (req, res) => {
 
@@ -68,7 +90,7 @@ router.get('/:postId', async (req, res) => {
         return res.json({ data: {} });
     }
 
-    return res.json({ data: posts });
+    return res.json({ data: post });
 });
 
 
