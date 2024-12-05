@@ -4,8 +4,8 @@ import { prisma } from '../utils/index.js'
 export default async function (req, res, next) {
     try {
 
-        // 헤더에서 accesstoken 가져오기
-        const authorization = req.headers.authorization;
+        // cookie에서 accesstoken 가져오기
+        const { authorization } = req.cookies;
 
         if (!authorization) {
             throw new Error('토큰이 존재하지 않습니다.');
@@ -31,14 +31,15 @@ export default async function (req, res, next) {
         });
 
         if (!user) {
-            res.clearCookie('authorizaion');
-            throw new EvalError('토큰 사용자가 존재하지 않습니다.');
+            res.clearCookie('authorization');
+            throw new Error('토큰 사용자가 존재하지 않습니다.');
         }
 
         req.user = user;
 
         // 문제없이 다음으로 넘어간다.
         next();
+
     } catch (err) {
         return res.status(401).json({ success: false, message: err.message });
     }
