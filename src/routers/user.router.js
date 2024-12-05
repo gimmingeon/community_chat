@@ -1,12 +1,15 @@
 import express from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../utils/index.js'
+import jwtwebToken from "jsonwebtoken";
+import bcrypt from 'bcrypt';
 
-const prisma = new PrismaClient();
 const router = express.Router();
 
-router.post('/sign-up', async (req, res) => {
+// 회원가입
+router.post('/signup', async (req, res) => {
     const { email, password, passwordConfirm, nickname } = req.body
 
+    // 필수값 검증
     if (!email) {
         return res.status(400).json({ success: false, message: "이메일은 필수입니다." })
     }
@@ -23,28 +26,66 @@ router.post('/sign-up', async (req, res) => {
         return res.status(400).json({ success: false, message: "닉네임은 필수입니다." })
     }
 
-    const exitUser = await prisma.user.findFirst({
+    const exitEmail = await prisma.user.findFirst({
         where: { email }
     });
 
-    if (exitUser) {
+    if (exitEmail) {
         return res.status(400).json({ success: false, message: "이미 존재하는 이메일입니다." });
+    }
+
+    const exitNickname = await prisma.user.findFirst({ where: { nickname } });
+
+    if (exitNickname) {
+        return res.status(400).json({ success: false, message: "이미 존재하는 닉네임입니다." });
     }
 
     if (!(password == passwordConfirm)) {
         return res.status(400).json({ success: false, message: "비밀번호와 비밀번호 확인이 맞지 않습니다.." });
     }
 
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     await prisma.user.create({
         data: {
             email,
-            password,
+            password: hashedPassword,
             nickname,
         }
     });
 
     return res.status(201).json({ email, nickname });
-
 });
+
+// 로그인
+router.post('/login', async (req, res) => {
+    const { email, password } = req.body;
+
+    // 필수값 검증
+    if (!email) {
+        return res.status(400).json({ success: false, message: "이메일은 필수입니다." })
+    }
+
+    if (!password) {
+        return res.status(400).json({ success: false, message: "비밀번호는 필수입니다." })
+    }
+
+    const exitUser = await prisma.user.findFirst({ where: { email } })
+
+    if (!exitUser) {
+        return res.status(401).json({ success: false, message: '이메일이 틀렸습니다.' })
+    }
+
+    if (!(await bcrypt.compare(password, exitUser.password))) {
+        return res.status(401).json({ success: false, message: '비밀번호가 틀렸습니다.' })
+    }
+
+    const accessToken = jwtwebToken.sign({ userId: exitUser.userId }, 'custom-secret-key', { expiresIn: '12h' });
+
+    // res.cookie('authorizaion', `Bearer ${accessToken}`);
+
+    return res.json({ accessToken });
+
+})
 
 export default router;
