@@ -53,7 +53,7 @@ router.get('/', async (req, res) => {
         ]
     });
 
-    return res.json({ data: posts });
+    return res.json(posts);
 });
 
 // 게시글 상세 조회
@@ -95,7 +95,56 @@ router.get('/:postId', async (req, res) => {
 
 
 // 게시글 수정
+router.patch('/:postId', jwtMiddleware, async (req, res) => {
+    const postId = req.params.postId;
+    const { userId } = req.user;
+    const { title, content } = req.body;
 
+    if (!postId) {
+        return res.status(400).json({
+            success: false,
+            message: 'postId는 필수입니다.'
+        });
+    }
+
+    if (!title) {
+        return res.status(400).json({
+            success: false,
+            message: '제목을 입력해주세요.'
+        });
+    }
+
+    if (!content) {
+        return res.status(400).json({
+            success: false,
+            message: '내용을 입력해주세요.'
+        });
+    }
+
+    const post = await prisma.post.findFirst({ where: { postId: Number(postId) } });
+
+    if (!post) {
+        return res.status(404).json({
+            success: false,
+            message: '존재하지 않는 게시글입니다.'
+        });
+    }
+
+    if (post.userId !== userId) {
+        return res.status(403).json({
+            success: false,
+            message: '게시글은 작성자만 수정할 수 있습니다.'
+        });
+    }
+
+    const patchPost = await prisma.post.update({
+        where: { postId: post.postId },
+        data: { title, content }
+
+    });
+
+    return res.status(200).json({ patchPost });
+});
 
 // 게시글 삭제
 
