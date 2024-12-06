@@ -179,7 +179,7 @@ router.delete('/:postId', jwtMiddleware, async (req, res) => {
     });
 
     return res.status(201).json({ message: "게시글이 삭제되었습니다." })
-})
+});
 
 
 export default router;
