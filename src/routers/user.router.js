@@ -3,12 +3,52 @@ import { prisma } from '../utils/index.js'
 import jwtwebToken from "jsonwebtoken";
 import bcrypt from 'bcrypt';
 import jwtMiddleware from '../middleware/jwt-validate-middleware.js';
+import nodemailer from 'nodemailer';
 
 const router = express.Router();
 
+const verifiCode = {};
+
+router.post('/verify-email', async (req, res) => {
+
+    const { email } = req.body;
+
+    if (!email) {
+        return res.status(400).json({ success: false, message: "이메일을 입력해주세요." })
+    }
+
+    try {
+        const verficationCode = Math.floor(1000 + Math.random() * 9000);
+
+        verifiCode[email] = verficationCode;
+
+        const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+                user: process.env.NODEMAILER_USER,
+                pass: process.env.NODEMAILER_PASS
+            }
+        });
+
+        const mailSend = {
+            from: process.env.NODEMAILER_USER,
+            to: email,
+            subject: "이메일 인증",
+            text: `계정을 인증하려면 다음의 숫자를 입력하세요: ${verficationCode}`,
+        };
+
+        await transporter.sendMail(mailSend);
+
+        return res.status(200).json({ message: "인증번호가 전송되었습니다." });
+
+    } catch (error) {
+        return res.status(500).json({ message: '이메일 전송 중 오류가 발생했습니다.' });
+    }
+});
+
 // 회원가입
 router.post('/signup', async (req, res) => {
-    const { email, password, passwordConfirm, nickname } = req.body
+    const { email, password, passwordConfirm, nickname } = req.body;
 
     // 필수값 검증
     if (!email) {
