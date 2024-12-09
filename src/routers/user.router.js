@@ -4,11 +4,11 @@ import jwtwebToken from "jsonwebtoken";
 import bcrypt from 'bcrypt';
 import jwtMiddleware from '../middleware/jwt-validate-middleware.js';
 import nodemailer from 'nodemailer';
+import redisClient from '../utils/redisClient.js';
 
 const router = express.Router();
 
-const verifiCode = {};
-
+// 이메일 인증번호 전송
 router.post('/verify-email', async (req, res) => {
 
     const { email } = req.body;
@@ -17,10 +17,18 @@ router.post('/verify-email', async (req, res) => {
         return res.status(400).json({ success: false, message: "이메일을 입력해주세요." })
     }
 
+    const exitEmail = await prisma.user.findFirst({
+        where: { email }
+    });
+
+    if (exitEmail) {
+        return res.status(400).json({ success: false, message: "이미 존재하는 이메일입니다." });
+    }
+
     try {
         const verficationCode = Math.floor(1000 + Math.random() * 9000);
 
-        verifiCode[email] = verficationCode;
+        await redisClient.set(`${verficationCode}`, email, { EX: 300, })
 
         const transporter = nodemailer.createTransport({
             service: "gmail",
@@ -48,11 +56,11 @@ router.post('/verify-email', async (req, res) => {
 
 // 회원가입
 router.post('/signup', async (req, res) => {
-    const { email, password, passwordConfirm, nickname } = req.body;
+    const { verficationCode, password, passwordConfirm, nickname } = req.body;
 
     // 필수값 검증
-    if (!email) {
-        return res.status(400).json({ success: false, message: "이메일은 필수입니다." })
+    if (!verficationCode) {
+        return res.status(400).json({ success: false, message: "인증번호은는 필수입니다." })
     }
 
     if (!password) {
@@ -67,12 +75,10 @@ router.post('/signup', async (req, res) => {
         return res.status(400).json({ success: false, message: "닉네임은 필수입니다." })
     }
 
-    const exitEmail = await prisma.user.findFirst({
-        where: { email }
-    });
+    const email = await redisClient.get(`${verficationCode}`);
 
-    if (exitEmail) {
-        return res.status(400).json({ success: false, message: "이미 존재하는 이메일입니다." });
+    if (!email) {
+        return res.status(400).json({ success: false, message: "틀린 인증번호입니다." });
     }
 
     const exitNickname = await prisma.user.findFirst({ where: { nickname } });
@@ -94,6 +100,8 @@ router.post('/signup', async (req, res) => {
             nickname,
         }
     });
+
+    await redisClient.del(`${verficationCode}`);
 
     return res.status(201).json({ email, nickname });
 });
