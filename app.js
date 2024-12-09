@@ -4,7 +4,7 @@ import bodyParser from 'body-parser';
 import userRouter from './src/routers/user.router.js';
 import postRouter from './src/routers/post.router.js';
 import commentRouter from './src/routers/comment.router.js';
-import './src/utils/redis.js';
+import './src/utils/redisClient.js';
 
 const app = express();
 const port = 3000;
